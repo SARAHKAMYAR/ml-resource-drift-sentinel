@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schema report · Drift Sentinel</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b1220;color:#e2e8f0;font:16px system-ui,sans-serif}
+main{max-width:1120px;margin:auto;padding:48px 24px}.eyebrow{color:#38bdf8;letter-spacing:3px;font-size:12px}
+h1{font-size:42px;letter-spacing:-1px;margin:14px 0}p{color:#aebed4;line-height:1.7}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:28px 0}
+.card,section{background:#121e31;border:1px solid #26354b;border-radius:14px;padding:22px}
+.card strong{display:block;font-size:28px;margin-top:10px}.card span{color:#aebed4}
+section{margin-top:20px}h2{font-size:20px}.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:14px 10px;border-bottom:1px solid #26354b}
+th{color:#aebed4}svg{max-width:600px;width:100%;height:auto}
+code{overflow-wrap:anywhere}footer{margin-top:28px;color:#aebed4;font-size:13px}
+@media(max-width:650px){.cards{grid-template-columns:repeat(2,1fr)}h1{font-size:32px}}
+</style><main><div class="eyebrow">ML RESOURCE DRIFT SENTINEL / SCHEMA MONITOR</div>
+<h1>See what changed. Keep the context.</h1><p><strong>Synthetic demo</strong> · Schema changes and upstream names are illustrative.</p><p><code>demo.customers</code><br>Checked 2026-01-15T10:00:00+00:00</p>
+<div class="cards"><div class="card"><span>Status</span><strong>Breaking</strong></div>
+<div class="card"><span>Baseline fields</span><strong>21</strong></div>
+<div class="card"><span>Current fields</span><strong>20</strong></div>
+<div class="card"><span>Changes</span><strong>5</strong></div></div>
+<section><h2>Changes by category</h2><svg viewBox="0 0 560 175" role="img" aria-label="Schema change counts: {&#x27;removed&#x27;: 2, &#x27;type_changed&#x27;: 2, &#x27;added&#x27;: 1}"><text x="0" y="30" fill="#dbeafe">removed</text><rect x="140" y="12" width="360.0" height="26" rx="5" fill="#fb7185"/><text x="510.0" y="31" fill="white">2</text><text x="0" y="85" fill="#dbeafe">type changed</text><rect x="140" y="67" width="360.0" height="26" rx="5" fill="#fbbf24"/><text x="510.0" y="86" fill="white">2</text><text x="0" y="140" fill="#dbeafe">added</text><rect x="140" y="122" width="180.0" height="26" rx="5" fill="#38bdf8"/><text x="330.0" y="141" fill="white">1</text></svg>
+<p>Policy: removals and type changes require review. Additions are informational.</p></section>
+<section><h2>Field comparison</h2><div class="scroll"><table><thead><tr><th>Field</th><th>Change</th><th>Before</th><th>After</th><th>Severity</th><th>Incidents</th><th>This check</th></tr></thead>
+<tbody><tr><td>credit_limit</td><td>type_changed</td><td>FLOAT</td><td>VARCHAR(16777216)</td><td>high</td><td>1</td><td>Opened</td></tr><tr><td>customer_since</td><td>type_changed</td><td>VARCHAR(16777216)</td><td>TIMESTAMP_NTZ</td><td>high</td><td>1</td><td>Opened</td></tr><tr><td>dob</td><td>removed</td><td>VARCHAR(16777216)</td><td>—</td><td>high</td><td>1</td><td>Opened</td></tr><tr><td>loyalty_tier</td><td>added</td><td>—</td><td>VARCHAR(32)</td><td>info</td><td>1</td><td>Opened</td></tr><tr><td>zipcode</td><td>removed</td><td>VARCHAR(16777216)</td><td>—</td><td>high</td><td>1</td><td>Opened</td></tr></tbody></table></div>
+<p>Incident counts increase when a change first appears or returns after recovery, not on every check.</p></section>
+<section><h2>Investigation context</h2><p>import_customers_to_warehouse, customer_profile_normalization</p><p>Upstream assets are investigation leads; they do not establish causality.</p>
+<h2>Next step</h2><p>Review removed fields and type changes before the next downstream run.</p></section>
+<footer>Schema comparison only · This report does not measure model performance or feature distributions.</footer></main></html>
