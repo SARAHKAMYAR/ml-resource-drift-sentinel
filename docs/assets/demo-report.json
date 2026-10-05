@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "dataset": "demo.customers",
+  "checked_at": "2026-01-15T10:00:00+00:00",
+  "status": "breaking",
+  "baseline_fields": 21,
+  "current_fields": 20,
+  "changes": [
+    {
+      "field": "credit_limit",
+      "kind": "type_changed",
+      "severity": "high",
+      "before": "FLOAT",
+      "after": "VARCHAR(16777216)",
+      "occurrences": 1,
+      "newly_opened": true
+    },
+    {
+      "field": "customer_since",
+      "kind": "type_changed",
+      "severity": "high",
+      "before": "VARCHAR(16777216)",
+      "after": "TIMESTAMP_NTZ",
+      "occurrences": 1,
+      "newly_opened": true
+    },
+    {
+      "field": "dob",
+      "kind": "removed",
+      "severity": "high",
+      "before": "VARCHAR(16777216)",
+      "after": null,
+      "occurrences": 1,
+      "newly_opened": true
+    },
+    {
+      "field": "loyalty_tier",
+      "kind": "added",
+      "severity": "info",
+      "before": null,
+      "after": "VARCHAR(32)",
+      "occurrences": 1,
+      "newly_opened": true
+    },
+    {
+      "field": "zipcode",
+      "kind": "removed",
+      "severity": "high",
+      "before": "VARCHAR(16777216)",
+      "after": null,
+      "occurrences": 1,
+      "newly_opened": true
+    }
+  ],
+  "resolved": 0,
+  "upstreams": [
+    "import_customers_to_warehouse",
+    "customer_profile_normalization"
+  ],
+  "lineage_note": "Upstream assets are investigation leads; they do not establish causality.",
+  "recommendation": "Review removed fields and type changes before the next downstream run.",
+  "demo": true,
+  "fixture_note": "Synthetic schema changes; upstream names are illustrative."
+}

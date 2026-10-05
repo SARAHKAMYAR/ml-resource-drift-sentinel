@@ -1,0 +1,23 @@
+{
+  "phone_number": "VARCHAR(16777216)",
+  "account_mgr_id": "NUMBER(38,0)",
+  "address_line1": "VARCHAR(16777216)",
+  "address_line2": "VARCHAR(16777216)",
+  "address_line3": "VARCHAR(16777216)",
+  "country_id": "NUMBER(38,0)",
+  "credit_limit": "FLOAT",
+  "cust_first_name": "VARCHAR(16777216)",
+  "cust_last_name": "VARCHAR(16777216)",
+  "customer_class": "VARCHAR(16777216)",
+  "customer_id": "NUMBER(38,0)",
+  "customer_since": "VARCHAR(16777216)",
+  "dob": "VARCHAR(16777216)",
+  "mailshot": "NUMBER(38,0)",
+  "nls_language": "VARCHAR(16777216)",
+  "nls_territory": "VARCHAR(16777216)",
+  "partner_mailshot": "NUMBER(38,0)",
+  "region_id": "NUMBER(38,0)",
+  "suggestions": "VARCHAR(16777216)",
+  "town_city": "VARCHAR(16777216)",
+  "zipcode": "VARCHAR(16777216)"
+}

@@ -1,67 +1,110 @@
 # ML Resource Drift Sentinel
 
-An agent that catches silent schema drift in production data before it silently degrades a downstream ML model — and writes what it learns directly back into DataHub's metadata graph, so the next person or agent inherits the knowledge instead of rediscovering the problem.
+A small Python tool for checking whether a dataset's schema still matches its approved baseline. It records incident history and produces a report that makes the changes easy to inspect.
 
-Built for **Build with DataHub: The Agent Hackathon** — Production ML Agents category.
+![Schema drift report showing five synthetic changes](docs/assets/report-preview.jpg)
 
-## Why This Is Different
+## The problem
 
-Most drift detectors tell you something changed. This one tells you whether you've seen it before, where it probably came from, and writes that knowledge into the same graph the next person will already be looking at.
+A downstream pipeline can depend on a column that disappears or changes type without warning. The change may be small in the source table and still break a feature transformation later.
 
-**Detect + Analyze — not just "what changed" but "where it came from."**
-Grounded in current MLOps research (Leest et al., 2025, *"Tracing Distribution Shifts with Causal System Maps"*), most monitoring tools report a shift as an undifferentiated alarm. This agent uses DataHub's lineage graph to distinguish drift local to a table from drift inherited from an upstream pipeline, so the alert routes toward the team actually responsible.
+This project focuses on that boundary: compare the current schema with a known baseline, show the affected fields, and keep enough history to distinguish an ongoing issue from one that has returned.
 
-**Knowledge — the graph remembers, so the system gets smarter over time.**
-The agent tracks occurrence history and distinguishes a first-time anomaly from a recurring pattern. A field that drifts once is noise; a field that drifts repeatedly signals the pipeline itself is unreliable.
+## Try it
 
-**Write-back — DataHub as shared memory, not a side channel.**
-Every finding — the drift, its likely origin, and its history — gets written back into DataHub itself, rather than a log file or a Slack message only one person sees.
-
-This applies a lightweight version of the MAPE-K loop (Monitor–Analyze–Plan–Execute–Knowledge, IBM autonomic computing research) to ML data drift specifically, using DataHub's graph as the substrate for both the Analyze and Knowledge stages.
-
-## How It Works
-
-1. **Snapshot** — captures a dataset's schema via DataHub's MCP Server (`list_schema_fields`) as a known-good baseline.
-2. **Detect** — on each run, re-fetches the live schema and diffs it against the baseline.
-3. **Diagnose** — checks the dataset's upstream lineage (`get_lineage`) to determine whether drift is local or inherited from a pipeline.
-4. **Learn** — tracks how often each field has drifted in a local memory file, distinguishing first occurrences from recurring patterns.
-5. **Write back** — appends a structured alert (what changed, likely origin, history, recommendation) directly onto the dataset's description in DataHub (`update_description`).
-
-## Demo
-
-Demonstrated against a real e-commerce `customers` table — tagged PII and SOC2 Auditable, fed by a live Spark pipeline (`import_table_customers_to_snowflake`) — the kind of high-stakes table a real ML feature pipeline would depend on.
-
-## Setup
-
-Requires Python 3.11 (not 3.14 — see note below) and Docker.
+You need Python 3.11 or later. The offline demo uses only the standard library; no Docker, credentials, or external services are required.
 
 ```bash
-# 1. Create environment
-conda create -n datahub python=3.11 -y
-conda activate datahub
-
-# 2. Install DataHub
-pip install acryl-datahub
-datahub docker quickstart
-datahub init
-datahub datapack load showcase-ecommerce
-
-# 3. Install and run the MCP Server
-pip install mcp-server-datahub
-export DATAHUB_GMS_URL=http://localhost:8080
-export TOOLS_IS_MUTATION_ENABLED=true
-
-# 4. Run the agent
-python3 drift_check.py snapshot   # capture baseline
-python3 drift_check.py check      # detect drift, diagnose, learn, write back
+python scripts/demo.py
 ```
 
-**Note:** if `pip install acryl-datahub` fails with a `pydantic-core` build error, your Python version is too new (3.14+). Use Python 3.11 via conda as shown above.
+Open `docs/assets/demo-report.html` in your browser. The report uses synthetic changes to a customer-table schema. Upstream names are illustrative; no customer records are included.
 
-## Tech Stack
+To run a fresh check yourself:
 
-DataHub, DataHub MCP Server (Model Context Protocol), Python, Snowflake (sample data platform)
+```bash
+python -m sentinel check   --baseline examples/baseline.json   --schema examples/current.json   --dataset demo.customers   --lineage examples/upstreams.json
+```
+
+Open `reports/latest.html` for the visual report, or read `reports/latest.json` for the structured result. Repeat the command to see the same active incidents without increasing their counts.
+
+## What it checks
+
+| Change | Default severity | Reason |
+| --- | --- | --- |
+| Removed field | High | A consumer may still require the field. |
+| Changed type | High | Existing transformations may no longer accept the values. |
+| Added field | Informational | Usually compatible, but strict contracts may require review. |
+
+Type strings are compared after trimming outer whitespace and normalizing case. The tool does not infer whether a conversion is safe or whether two database-specific types are equivalent.
+
+## How it works
+
+![Architecture of the supported offline workflow](docs/assets/architecture.svg)
+
+The comparison engine is independent of the CLI and report renderer. Incident memory is scoped to both the dataset identifier and the baseline. A change opens an incident when it first appears. Checking it again leaves the count unchanged. If it disappears and later returns, the count increases.
+
+![Incident lifecycle from the reproducible fixture](docs/assets/incident-lifecycle.svg)
+
+These are fixture results, not production measurements. The demo opens five incidents, repeats the check, observes recovery, and introduces the same changes again. Regenerate the JSON and HTML evidence with `python scripts/demo.py`, then rebuild the SVG figures with `python scripts/figures.py`.
+
+## Create a baseline
+
+Schema files are JSON objects mapping field paths to native type strings:
+
+```json
+{"customer_id": "NUMBER(38,0)", "credit_limit": "FLOAT"}
+```
+
+```bash
+python -m sentinel snapshot   --schema examples/baseline.json   --baseline .sentinel/approved.json
+```
+
+Existing baseline files require `--overwrite`. Review the proposed schema before replacing an approved baseline: accepting a change makes it the new reference and starts a new incident-history scope.
+
+## Use it in a pipeline
+
+Add `--fail-on-breaking` to return exit code `2` when removals or type changes are present. Exit code `1` means invalid input or a processing error; successful checks otherwise return `0`.
+
+```bash
+python -m sentinel check   --baseline examples/baseline.json   --schema examples/current.json   --dataset demo.customers   --fail-on-breaking
+```
+
+The demo above deliberately returns `2`. Reports and state are still written.
+
+## Project layout
+
+```text
+sentinel/          Comparison engine, CLI, and HTML renderer
+examples/          Baseline, synthetic current schema, and illustrative lineage
+scripts/demo.py    Deterministic incident-lifecycle demo
+tests/            Unit and CLI integration tests
+docs/             Design notes, figures, and sample reports
+ legacy/           Original DataHub MCP prototype, preserved for reference
+```
+
+## Tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+The test suite covers additions, removals, type changes, recurrence, baseline isolation, invalid input, HTML escaping, exit codes, and baseline overwrite protection. GitHub Actions is configured to run it on Python 3.11, 3.12, and 3.13.
+
+## DataHub background
+
+The initial prototype fetched schema and lineage through DataHub's MCP server and appended findings to a dataset description. This version keeps that prototype in `legacy/` while making the comparison workflow reproducible without a live service.
+
+The supported CLI consumes JSON exports. Live MCP polling and metadata write-back are not integrated into the new core yet. The [integration notes](docs/DATAHUB.md) explain the boundary and deployment considerations.
+
+## Limits and next steps
+
+This tool detects schema changes. It does not measure feature distributions, model accuracy, or causal relationships. Upstream lineage offers places to investigate; the presence or absence of an upstream asset does not establish where a change originated.
+
+The default severity policy is deliberately conservative. Incident counts are observed reopenings, not independent production failures. Local state assumes one writer; atomic replacement prevents partial JSON files but does not coordinate concurrent processes. JSON, HTML, and state outputs are separate writes, not one transaction. Use separate state paths for independent jobs.
+
+Useful next steps are a tested DataHub adapter, configurable field contracts, compatibility-aware type rules, and shared incident storage for scheduled checks.
 
 ## License
 
-Apache 2.0 — see LICENSE file.
+Apache 2.0. The original license is preserved in [LICENSE](LICENSE).

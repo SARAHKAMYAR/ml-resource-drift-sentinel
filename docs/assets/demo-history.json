@@ -1,0 +1,32 @@
+[
+  {
+    "stage": "Baseline",
+    "changes": 0,
+    "opened": 0,
+    "resolved": 0
+  },
+  {
+    "stage": "First drift",
+    "changes": 5,
+    "opened": 5,
+    "resolved": 0
+  },
+  {
+    "stage": "Repeated check",
+    "changes": 5,
+    "opened": 0,
+    "resolved": 0
+  },
+  {
+    "stage": "Recovery",
+    "changes": 0,
+    "opened": 0,
+    "resolved": 5
+  },
+  {
+    "stage": "Drift returns",
+    "changes": 5,
+    "opened": 5,
+    "resolved": 0
+  }
+]

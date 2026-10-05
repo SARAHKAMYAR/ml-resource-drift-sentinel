@@ -1,4 +1,11 @@
 __pycache__/
-*.pyc
-test_mcp.py.save
-check_tools.py
+*.py[cod]
+.venv/
+.env
+.env.*
+.sentinel/
+reports/
+build/
+dist/
+*.egg-info/
+.DS_Store
